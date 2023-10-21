@@ -1,15 +1,19 @@
-# FROM node:18-slim as build
-FROM vite-app-deps as builder
+FROM vite-app-deps as deps
+FROM node:18-alpine as builder
+
+ARG VITE_TEST
+ENV VITE_TEST=${VITE_TEST}
 
 WORKDIR /src/app
 
-COPY --chown=1001:1001 . ./
-RUN npm run build
+COPY --from=deps /src/app/node_modules node_modules
+COPY . .
+RUN ls -a
+RUN yarn build
 
-FROM registry.redhat.io/ubi9/nginx-122
-# FROM nginx:1.22
-EXPOSE 8080
+FROM docker.io/nginx:1.22
+EXPOSE 80
 
-COPY --from=builder --chown=1001:1001 /src/app/dist /usr/share/nginx/html
+COPY --from=builder /src/app/dist /usr/share/nginx/html
 
 CMD ["nginx", "-g", "daemon off;"]

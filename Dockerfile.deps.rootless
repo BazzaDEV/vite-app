@@ -1,0 +1,6 @@
+FROM registry.redhat.io/ubi9/nodejs-18 as deps-builder
+
+WORKDIR /src/app
+
+COPY --chown=1001:1001 package.json package-lock.json ./
+RUN npm install --quiet

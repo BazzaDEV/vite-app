@@ -1,7 +1,12 @@
-# FROM node:18-alpine as deps-builder
-FROM registry.redhat.io/ubi9/nodejs-18 as deps-builder
+FROM node:18-alpine
 
 WORKDIR /src/app
 
-COPY --chown=1001:1001 package.json package-lock.json ./
-RUN npm install --quiet
+# Install dependencies based on the preferred package manager
+COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
+RUN \
+  if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
+  elif [ -f package-lock.json ]; then npm ci; \
+  elif [ -f pnpm-lock.yaml ]; then yarn global add pnpm && pnpm i --frozen-lockfile; \
+  else echo "Lockfile not found." && exit 1; \
+  fi
